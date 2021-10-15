@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-10-12 18:47:44
- * @LastEditTime: 2021-10-15 12:11:57
+ * @LastEditTime: 2021-10-15 15:27:43
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \RSA\RSA4096\RSA_4096_origin_private\private.c
@@ -17,7 +17,7 @@
 #include "rsa.h"
 #include "keys.h"
 #include "base64.h"
-const int count=100;
+const int count=10;
 int private_enc_dec_test()
 {
 	uint8_t input[512*16];
@@ -80,7 +80,7 @@ int private_enc_dec_test()
 		// }
 		sum1+=(double)(end-start)/CLOCKS_PER_SEC;
 	}
-	printf("rsa_public_encrypt Average time(s): %lf; rsa_private_decrypt Average time(s): %lf\n",sum/count,sum1/count);
+	printf("rsa_public_encrypt_any_len Average time(s): %lf; rsa_private_decrypt_any_len Average time(s): %lf\n",sum/count,sum1/count);
 
 	sum=0,sum1=0;
 	for(int i=0;i<count;i++)
@@ -90,7 +90,7 @@ int private_enc_dec_test()
 		// rsa_private_encrypt(output, &outputLen, input, inputLen, &sk);
 		end=clock();
 		if(status!=0){
-			printf("rsa_private_encrypt_any_len Error Code:%x",status);
+			printf("rsa_private_encrypt_any_len Error Code:%x\n",status);
 			break;
 		}
 		
@@ -99,7 +99,7 @@ int private_enc_dec_test()
 		status=rsa_public_decrypt_any_len(msg, &msg_len, output, outputLen, &sk);
 		end=clock();
 		if(status!=0){
-			printf("rsa_public_decrypt_any_len Error Code:%x",status);
+			printf("rsa_public_decrypt_any_len Error Code:%x\n",status);
 			break;
 		}
 		// if(memcmp(input,msg,sizeof(input))!=0){
