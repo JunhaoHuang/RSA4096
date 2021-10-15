@@ -18,19 +18,20 @@ int rsa_private_encrypt_any_len(uint8_t *out, uint32_t *out_len, uint8_t *in, ui
 	int status=0;
 	int len=0;
 	uint8_t *tmp_o=out;
-	for(int i=0;i<in_len && status==0;i+=RSA_MAX_MODULUS_LEN){
-		if((in_len-i)>RSA_MAX_MODULUS_LEN){
-			status=rsa_private_encrypt(tmp_o,&len,in,RSA_MAX_MODULUS_LEN,sk);
+	*out_len=0;
+	for(int i=0;i<in_len && status==0;i+=(RSA_MAX_MODULUS_LEN-11)){
+		if((in_len-i)>(RSA_MAX_MODULUS_LEN-11)){
+			status=rsa_private_encrypt(tmp_o,&len,in,RSA_MAX_MODULUS_LEN-11,sk);
 		}
 		else{
 			status=rsa_private_encrypt(tmp_o,&len,in,in_len-i,sk);
 			break;
 		}
 		tmp_o=tmp_o+len;
+		*out_len+=len;
 	}
 	tmp_o=NULL;
 	free(tmp_o);
-	*out_len=len;
 	return status;
 }
 
@@ -38,7 +39,9 @@ int rsa_private_decrypt_any_len(uint8_t *out, uint32_t *out_len, uint8_t *in, ui
 	int status=0;
 	int len=0;
 	uint8_t *tmp_o=out;
-	for(int i=0;i<in_len && status==0;i+=RSA_MAX_MODULUS_LEN){
+	int i=0;
+	*out_len=0;
+	for(i=0;i<in_len && status==0;i+=RSA_MAX_MODULUS_LEN){
 		if((in_len-i)>RSA_MAX_MODULUS_LEN){
 			status=rsa_private_decrypt(tmp_o,&len,in,RSA_MAX_MODULUS_LEN,sk);
 		}
@@ -47,10 +50,10 @@ int rsa_private_decrypt_any_len(uint8_t *out, uint32_t *out_len, uint8_t *in, ui
 			break;
 		}
 		tmp_o=tmp_o+len;
+		*out_len+=len;
 	}
 	tmp_o=NULL;
 	free(tmp_o);
-	*out_len=len;
 	return status;
 }
 
@@ -193,19 +196,21 @@ int rsa_public_encrypt_any_len(uint8_t *out, uint32_t *out_len, uint8_t *in, uin
 	int status=0;
 	int len=0;
 	uint8_t *tmp_o=out;
-	for(int i=0;i<in_len && status==0;i+=RSA_MAX_MODULUS_LEN){
-		if((in_len-i)>RSA_MAX_MODULUS_LEN){
-			status=rsa_public_encrypt(tmp_o,&len,in,RSA_MAX_MODULUS_LEN,pk);
+	*out_len=0;
+	for(int i=0;i<in_len && status==0;i+=(RSA_MAX_MODULUS_LEN-11)){
+		if((in_len-i)>(RSA_MAX_MODULUS_LEN-11)){
+			status=rsa_public_encrypt(tmp_o,&len,in,RSA_MAX_MODULUS_LEN-11,pk);
 		}
 		else{
 			status=rsa_public_encrypt(tmp_o,&len,in,in_len-i,pk);
 			break;
 		}
 		tmp_o=tmp_o+len;
+		*out_len+=len;
 	}
 	tmp_o=NULL;
 	free(tmp_o);
-	*out_len=len;
+	// *out_len=len;
 	return status;
 }
 
@@ -213,6 +218,7 @@ int rsa_public_decrypt_any_len(uint8_t *out, uint32_t *out_len, uint8_t *in, uin
 	int status=0;
 	int len=0;
 	uint8_t *tmp_o=out;
+	*out_len=0;
 	for(int i=0;i<in_len && status==0;i+=RSA_MAX_MODULUS_LEN){
 		if((in_len-i)>RSA_MAX_MODULUS_LEN){
 			status=rsa_public_decrypt(tmp_o,&len,in,RSA_MAX_MODULUS_LEN,pk);
@@ -222,10 +228,11 @@ int rsa_public_decrypt_any_len(uint8_t *out, uint32_t *out_len, uint8_t *in, uin
 			break;
 		}
 		tmp_o=tmp_o+len;
+		*out_len+=len;
 	}
 	tmp_o=NULL;
 	free(tmp_o);
-	*out_len=len;
+	// *out_len=len;
 	return status;
 }
 
@@ -236,7 +243,7 @@ int rsa_public_encrypt(uint8_t *out, uint32_t *out_len, uint8_t *in, uint32_t in
     uint32_t i, modulus_len;
 
     modulus_len = (pk->bits + 7) / 8;
-    if(in_len + 11 > modulus_len) {
+    if(in_len + 11 > modulus_len) {//padding len
         return ERR_WRONG_LEN;
     }
 

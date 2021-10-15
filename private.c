@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-10-12 18:47:44
- * @LastEditTime: 2021-10-15 10:27:12
+ * @LastEditTime: 2021-10-15 12:11:57
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \RSA\RSA4096\RSA_4096_origin_private\private.c
@@ -27,7 +27,7 @@ int private_enc_dec_test()
 	unsigned char msg [512*16];
     uint32_t msg_len;
     uint32_t outputLen;
-    uint8_t  inputLen;
+    int32_t inputLen;
 
     printf("RSA encryption decryption test is beginning!\n");
     printf("\n");
@@ -52,16 +52,32 @@ int private_enc_dec_test()
     // private key encrypt
 	clock_t start,end;
 	double sum=0,sum1=0;
+	int status=0;
 	for(int i=0;i<count;i++)
 	{
 		start=clock();
-		rsa_public_encrypt_any_len(output, &outputLen, input, inputLen, &pk);
+		status=rsa_public_encrypt_any_len(output, &outputLen, input, inputLen, &pk);
 		// rsa_private_encrypt(output, &outputLen, input, inputLen, &sk);
 		end=clock();
+		if(status!=0){
+			printf("rsa_public_encrypt_any_len Error Code:%x\n",status);
+			break;
+		}
+		
 		sum+=(double)(end-start)/CLOCKS_PER_SEC;
 		start=clock();
-		rsa_private_decrypt_any_len(msg, &msg_len, output, outputLen, &sk);
+		status=rsa_private_decrypt_any_len(msg, &msg_len, output, outputLen, &sk);
 		end=clock();
+		if(status!=0){
+			printf("rsa_private_decrypt_any_len Error Code:%x\n",status);
+			break;
+		}
+		// if(memcmp(input,msg,sizeof(input))!=0){
+		// 	printf("rsa_public_encrypt_any_len and rsa_private_decrypt_any_len Error\n");
+		// 	print_array("input:",input,inputLen);
+		// 	print_array("decrypt:",msg,msg_len);
+		// 	return 1;
+		// }
 		sum1+=(double)(end-start)/CLOCKS_PER_SEC;
 	}
 	printf("rsa_public_encrypt Average time(s): %lf; rsa_private_decrypt Average time(s): %lf\n",sum/count,sum1/count);
@@ -70,13 +86,27 @@ int private_enc_dec_test()
 	for(int i=0;i<count;i++)
 	{
 		start=clock();
-		rsa_private_encrypt_any_len(output, &outputLen, input, inputLen, &pk);
+		status=rsa_private_encrypt_any_len(output, &outputLen, input, inputLen, &pk);
 		// rsa_private_encrypt(output, &outputLen, input, inputLen, &sk);
 		end=clock();
+		if(status!=0){
+			printf("rsa_private_encrypt_any_len Error Code:%x",status);
+			break;
+		}
+		
 		sum+=(double)(end-start)/CLOCKS_PER_SEC;
 		start=clock();
-		rsa_public_decrypt_any_len(msg, &msg_len, output, outputLen, &sk);
+		status=rsa_public_decrypt_any_len(msg, &msg_len, output, outputLen, &sk);
 		end=clock();
+		if(status!=0){
+			printf("rsa_public_decrypt_any_len Error Code:%x",status);
+			break;
+		}
+		// if(memcmp(input,msg,sizeof(input))!=0){
+		// 	printf("rsa_public_encrypt_any_len and rsa_private_decrypt_any_len Error\n");
+		// 	return 1;
+		// }
+		// end=clock();
 		sum1+=(double)(end-start)/CLOCKS_PER_SEC;
 	}
 	printf("rsa_private_encrypt Average time(s): %lf; rsa_public_decrypt Average time(s): %lf\n",sum/count,sum1/count);
