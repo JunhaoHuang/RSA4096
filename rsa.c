@@ -21,10 +21,10 @@ int rsa_private_encrypt_any_len(uint8_t *out, uint32_t *out_len, uint8_t *in, ui
 	*out_len=0;
 	for(int i=0;i<in_len && status==0;i+=(RSA_MAX_MODULUS_LEN-11)){
 		if((in_len-i)>(RSA_MAX_MODULUS_LEN-11)){
-			status=rsa_private_encrypt(tmp_o,&len,in,RSA_MAX_MODULUS_LEN-11,sk);
+			status=rsa_private_encrypt(tmp_o,&len,in+i,RSA_MAX_MODULUS_LEN-11,sk);
 		}
 		else{
-			status=rsa_private_encrypt(tmp_o,&len,in,in_len-i,sk);
+			status=rsa_private_encrypt(tmp_o,&len,in+i,in_len-i,sk);
 			break;
 		}
 		tmp_o=tmp_o+len;
@@ -35,6 +35,30 @@ int rsa_private_encrypt_any_len(uint8_t *out, uint32_t *out_len, uint8_t *in, ui
 	return status;
 }
 
+int rsa_public_encrypt_any_len(uint8_t *out, uint32_t *out_len, uint8_t *in, uint32_t in_len, rsa_pk_t *pk){
+	int status=0;
+	int len=0;
+	uint8_t *tmp_o=out;
+	*out_len=0;
+	for(int i=0;i<in_len && status==0;i+=(RSA_MAX_MODULUS_LEN-11)){
+		if((in_len-i)>(RSA_MAX_MODULUS_LEN-11)){
+			status=rsa_public_encrypt(tmp_o,&len,in+i,RSA_MAX_MODULUS_LEN-11,pk);
+			tmp_o=tmp_o+len;
+			*out_len+=len;
+		}
+		else{
+			status=rsa_public_encrypt(tmp_o,&len,in+i,in_len-i,pk);
+			*out_len+=len;
+			break;
+		}		
+	}
+	tmp_o=NULL;
+	free(tmp_o);
+	// *out_len=len;
+	return status;
+}
+
+
 int rsa_private_decrypt_any_len(uint8_t *out, uint32_t *out_len, uint8_t *in, uint32_t in_len, rsa_sk_t *sk){
 	int status=0;
 	int len=0;
@@ -43,14 +67,16 @@ int rsa_private_decrypt_any_len(uint8_t *out, uint32_t *out_len, uint8_t *in, ui
 	*out_len=0;
 	for(i=0;i<in_len && status==0;i+=RSA_MAX_MODULUS_LEN){
 		if((in_len-i)>RSA_MAX_MODULUS_LEN){
-			status=rsa_private_decrypt(tmp_o,&len,in,RSA_MAX_MODULUS_LEN,sk);
+			status=rsa_private_decrypt(tmp_o,&len,in+i,RSA_MAX_MODULUS_LEN,sk);
+			tmp_o=tmp_o+len;
+			*out_len+=len;
 		}
 		else{
-			status=rsa_private_decrypt(tmp_o,&len,in,in_len-i,sk);
+			status=rsa_private_decrypt(tmp_o,&len,in+i,in_len-i,sk);
+			*out_len+=len;
 			break;
 		}
-		tmp_o=tmp_o+len;
-		*out_len+=len;
+		
 	}
 	tmp_o=NULL;
 	free(tmp_o);
@@ -186,55 +212,36 @@ static int public_block_operation(uint8_t *out, uint32_t *out_len, uint8_t *in, 
 void generate_rand(uint8_t *block, uint32_t block_len)
 {
     uint32_t i;
+	srand ((unsigned)time(NULL));   // real rand message
     for(i=0; i<block_len; i++) {
-        srand ((unsigned)time(NULL));   // real rand message
         block[i] = rand();
+		while(block[i]==0)
+			block[i]=rand();
     }
 }
 
-int rsa_public_encrypt_any_len(uint8_t *out, uint32_t *out_len, uint8_t *in, uint32_t in_len, rsa_pk_t *pk){
-	int status=0;
-	int len=0;
-	uint8_t *tmp_o=out;
-	*out_len=0;
-	for(int i=0;i<in_len && status==0;i+=(RSA_MAX_MODULUS_LEN-11)){
-		if((in_len-i)>(RSA_MAX_MODULUS_LEN-11)){
-			status=rsa_public_encrypt(tmp_o,&len,in,RSA_MAX_MODULUS_LEN-11,pk);
-		}
-		else{
-			status=rsa_public_encrypt(tmp_o,&len,in,in_len-i,pk);
-			break;
-		}
-		tmp_o=tmp_o+len;
-		*out_len+=len;
-	}
-	tmp_o=NULL;
-	free(tmp_o);
-	// *out_len=len;
-	return status;
-}
 
-int rsa_public_decrypt_any_len(uint8_t *out, uint32_t *out_len, uint8_t *in, uint32_t in_len, rsa_pk_t *pk){
-	int status=0;
-	int len=0;
-	uint8_t *tmp_o=out;
-	*out_len=0;
-	for(int i=0;i<in_len && status==0;i+=RSA_MAX_MODULUS_LEN){
-		if((in_len-i)>RSA_MAX_MODULUS_LEN){
-			status=rsa_public_decrypt(tmp_o,&len,in,RSA_MAX_MODULUS_LEN,pk);
-		}
-		else{
-			status=rsa_public_decrypt(tmp_o,&len,in,in_len-i,pk);
-			break;
-		}
-		tmp_o=tmp_o+len;
-		*out_len+=len;
-	}
-	tmp_o=NULL;
-	free(tmp_o);
-	// *out_len=len;
-	return status;
-}
+// int rsa_public_decrypt_any_len(uint8_t *out, uint32_t *out_len, uint8_t *in, uint32_t in_len, rsa_pk_t *pk){
+// 	int status=0;
+// 	int len=0;
+// 	uint8_t *tmp_o=out;
+// 	*out_len=0;
+// 	for(int i=0;i<in_len && status==0;i+=RSA_MAX_MODULUS_LEN){
+// 		if((in_len-i)>RSA_MAX_MODULUS_LEN){
+// 			status=rsa_public_decrypt(tmp_o,&len,in,RSA_MAX_MODULUS_LEN,pk);
+// 		}
+// 		else{
+// 			status=rsa_public_decrypt(tmp_o,&len,in,in_len-i,pk);
+// 			break;
+// 		}
+// 		tmp_o=tmp_o+len;
+// 		*out_len+=len;
+// 	}
+// 	tmp_o=NULL;
+// 	free(tmp_o);
+// 	// *out_len=len;
+// 	return status;
+// }
 
 int rsa_public_encrypt(uint8_t *out, uint32_t *out_len, uint8_t *in, uint32_t in_len, rsa_pk_t *pk)
 {
@@ -266,43 +273,43 @@ int rsa_public_encrypt(uint8_t *out, uint32_t *out_len, uint8_t *in, uint32_t in
     return status;
 }
 
-int rsa_public_decrypt(uint8_t *out, uint32_t *out_len, uint8_t *in, uint32_t in_len, rsa_pk_t *pk) {
-    int status;
-    uint8_t pkcs_block[RSA_MAX_MODULUS_LEN];
-    uint32_t i, modulus_len, pkcs_block_len;
+// int rsa_public_decrypt(uint8_t *out, uint32_t *out_len, uint8_t *in, uint32_t in_len, rsa_pk_t *pk) {
+//     int status;
+//     uint8_t pkcs_block[RSA_MAX_MODULUS_LEN];
+//     uint32_t i, modulus_len, pkcs_block_len;
 
-    modulus_len = (pk->bits + 7) / 8;
-    if (in_len > modulus_len)
-        return ERR_WRONG_LEN;
+//     modulus_len = (pk->bits + 7) / 8;
+//     if (in_len > modulus_len)
+//         return ERR_WRONG_LEN;
 
-    status = public_block_operation(pkcs_block, &pkcs_block_len, in, in_len, pk);
-    if (status != 0)
-        return status;
+//     status = public_block_operation(pkcs_block, &pkcs_block_len, in, in_len, pk);
+//     if (status != 0)
+//         return status;
 
-    if (pkcs_block_len != modulus_len)
-        return ERR_WRONG_LEN;
+//     if (pkcs_block_len != modulus_len)
+//         return ERR_WRONG_LEN;
 
-    if ((pkcs_block[0] != 0) || (pkcs_block[1] != 1))
-        return ERR_WRONG_DATA;
+//     if ((pkcs_block[0] != 0) || (pkcs_block[1] != 1))
+//         return ERR_WRONG_DATA;
 
-    for (i = 2; i < modulus_len - 1; i++) {
-        if (pkcs_block[i] != 0xFF) break;
-    }
+//     for (i = 2; i < modulus_len - 1; i++) {
+//         if (pkcs_block[i] != 0xFF) break;
+//     }
 
-    if (pkcs_block[i++] != 0)
-        return ERR_WRONG_DATA;
+//     if (pkcs_block[i++] != 0)
+//         return ERR_WRONG_DATA;
 
-    *out_len = modulus_len - i;
-    if (*out_len + 11 > modulus_len)
-        return ERR_WRONG_DATA;
+//     *out_len = modulus_len - i;
+//     if (*out_len + 11 > modulus_len)
+//         return ERR_WRONG_DATA;
 
-    memcpy((uint8_t *) out, (uint8_t *) &pkcs_block[i], *out_len);
+//     memcpy((uint8_t *) out, (uint8_t *) &pkcs_block[i], *out_len);
 
-    // Clear potentially sensitive information
-    memset((uint8_t *) pkcs_block, 0, sizeof(pkcs_block));
+//     // Clear potentially sensitive information
+//     memset((uint8_t *) pkcs_block, 0, sizeof(pkcs_block));
 
-    return status;
-}
+//     return status;
+// }
 
 static int public_block_operation(uint8_t *out, uint32_t *out_len, uint8_t *in, uint32_t in_len, rsa_pk_t *pk)
 {
